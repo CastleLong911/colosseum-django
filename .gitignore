@@ -21,4 +21,4 @@ yarn-error.log*
 
 .env
 
-/colosseum-react/.env
+colosseum-react/.env
