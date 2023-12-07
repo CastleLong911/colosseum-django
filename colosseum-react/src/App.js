@@ -33,7 +33,7 @@ function App() {
     <section className="bg-white dark: bg-zinc-900">
 
       <Routes>
-        <Route path="/login/kakao" element={<LoginHandler/>}></Route>
+        <Route path="/api/login/kakao" element={<LoginHandler/>}></Route>
       </Routes>
 
       <div className={"container px-6 py-10 mx-auto" + (open == true ? " blur" : "")}>
