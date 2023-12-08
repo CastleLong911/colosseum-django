@@ -21,7 +21,7 @@ function App() {
 */
 
   return (
-    <div>
+    <div className="h-full">
       <Routes>
         <Route path="/" element={<Main/>}></Route>
         <Route path="/api/login/kakao" element={<LoginHandler/>}></Route>
@@ -72,11 +72,7 @@ function Main(){
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 정리
   }, []);
   return (
-    <section className="bg-white dark: bg-zinc-900">
-
-      <Routes>
-        <Route path="/api/login/kakao" element={<LoginHandler/>}></Route>
-      </Routes>
+    <section className="bg-white dark: bg-zinc-900 h-full">
 
       <div className={"container px-6 py-10 mx-auto" + (open == true ? " blur" : "")}>
         <div id="menuToggle" className="cursor-pointer absolute top-0 right-0 m-5" onClick={toggleMenu}>
