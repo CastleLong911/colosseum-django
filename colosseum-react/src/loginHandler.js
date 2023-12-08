@@ -18,7 +18,10 @@ const LoginHandeler = (props) => {
       }).then((res) => { //백에서 완료후 우리사이트 전용 토큰 넘겨주는게 성공했다면
         console.log(res);
         //계속 쓸 정보들( ex: 이름) 등은 localStorage에 저장해두자
-        localStorage.setItem("name", res.data.account.kakaoName);
+        localStorage.setItem("kakaoId", res.data.kakaoId);
+        localStorage.setItem("nickname", res.data.nickname);
+        localStorage.setItem("profileImageUrl", res.data.profileImageUrl);
+        localStorage.setItem("jwtToken", res.data.token);
         //로그인이 성공하면 이동할 페이지
         navigate("/");
       }).catch(error => {console.log('error!!! : ' + error);});

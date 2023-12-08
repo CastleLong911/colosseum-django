@@ -1,8 +1,10 @@
 from django.http import JsonResponse, HttpResponse
-import requests, os
+import requests, os, jwt, datetime
+from .models import CustomUser
+from django.contrib.auth import login, logout
 from dotenv import load_dotenv
 
-def login_kakao(request):
+def auth_kakao(request):
     if request.method == 'GET':
         try:
             code = request.GET['code']
@@ -28,10 +30,33 @@ def login_kakao(request):
             userData = userData.json()
             kakao_account = userData.get("kakao_account")
             print(kakao_account)
-        except:
-            print('eng??')
 
-        return JsonResponse({'success':'sucess'})
+            if kakao_account is not None:
+                user, created = CustomUser.objects.get_or_create(
+                    kakao_id=userData.get("id"),
+                    defaults={
+                        'nickname': kakao_account.get("profile").get("nickname"),
+                        'profileImageUrl': kakao_account.get("profile").get("profile_image_url")
+                    }
+                )
+                login(request, user)
+                jwt_token = jwt.encode({'kakao_id': userData.get("id"), 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, str(os.getenv('CLIENT_ID')), algorithm=str(os.getenv('ALGORITHM')))
+                result = {
+                    'kakaoId': userData.get("id"),
+                    'nickname': kakao_account.get("profile").get("nickname"),
+                    'profileImageUrl': kakao_account.get("profile").get("profile_image_url"),
+                    'token': jwt_token
+                }
+                return JsonResponse(result)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'success': 'fail'})
+
+        return
     else:
         print(request.method)
-        return JsonResponse({'success':'fail'})
+        return JsonResponse({'success': 'fail'})
+
+def auth_logout(request):
+    logout(request)
+    return JsonResponse({'result': 'success'})
