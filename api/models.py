@@ -1,5 +1,8 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, kakao_id, nickname, profileImageUrl, password=None, **extra_fields):
@@ -22,3 +25,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.kakao_id
+
+class RoomInformation(models.Model):
+    roomId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    pro = models.IntegerField(default=0)
+    con = models.IntegerField(default=0)
+    topic = models.CharField(max_length=200)
+    period = models.IntegerField(default=7)
+
+    def __str__(self):
+        return self.topic

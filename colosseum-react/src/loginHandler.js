@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import axios from "axios";
-
 const LoginHandeler = (props) => {
   const navigate = useNavigate();
   const code = new URL(window.location.href).searchParams.get("code");
 
+  axios.defaults.withCredentials = true;
+  
   useEffect(() => {
     const kakaoLogin = async () => {
+      
       await axios({
         method: "get",
         url: `http://127.0.0.1:8000/api/login/kakao?code=${code}`,
@@ -22,6 +24,8 @@ const LoginHandeler = (props) => {
         localStorage.setItem("nickname", res.data.nickname);
         localStorage.setItem("profileImageUrl", res.data.profileImageUrl);
         localStorage.setItem("jwtToken", res.data.token);
+        localStorage.setItem("isAdmin",res.data.isAdmin);
+        document.cookie = "X-CSRFToken=" + res.data.csrftoken;
         //로그인이 성공하면 이동할 페이지
         navigate("/");
       }).catch(error => {console.log('error!!! : ' + error);});

@@ -6,7 +6,7 @@ import { KAKAO_AUTH_URL } from './OAuth';
 import {Routes, Route, Link} from 'react-router-dom';
 import LoginHandler from './loginHandler';
 import { jwtDecode } from 'jwt-decode';
-
+import { getCookie } from './csrftoken';
 
 function App() {
   //백엔드 연결시 아래 쓰셈
@@ -39,6 +39,9 @@ function Main(){
   let [nickname, setNickname] = useState('');
   let [kakaoId, setKakaoId] = useState('');
   let [profileImageUrl, setProfileImageUrl] = useState('');
+  let [isAdmin, setIsAdmin] = useState(false);
+  let [newTopic, setNewTopic] = useState('');
+  let [newPeriod, setNewPeriod] = useState();
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
@@ -60,6 +63,9 @@ function Main(){
         setNickname(localStorage.getItem('nickname'));
         setKakaoId(localStorage.getItem('kakaoId'));
         setProfileImageUrl(localStorage.getItem('profileImageUrl'));
+        if(localStorage.getItem('isAdmin') == 'true'){
+          setIsAdmin(true);
+        }
         // 이 변수들을 사용하는 로직 구현
       }
     };
@@ -71,9 +77,46 @@ function Main(){
   
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 정리
   }, []);
+
+  const logout = () => {
+    console.log(process.env.REACT_APP_DEFAULT_URL);
+    fetch(process.env.REACT_APP_DEFAULT_URL+"/api/logout").then(res => res.json).then(data => console.log('logout: ' + data)).catch((error) => {
+      console.log("에러 발생:", error); // 에러 메시지 출력
+    });
+    localStorage.clear();
+    isLogin(false);
+    setIsAdmin(false);
+  }
+
+  const handleNewTopicChange = (e) => {
+    setNewTopic(e.target.value);
+  }
+
+  const handleNewPeriodChange = (e) => {
+    setNewPeriod(e.target.value);
+  }
+
+  const createTopic = () => {
+    const csrftoken = getCookie('csrftoken');
+    console.log('topic: ' + newTopic);
+    console.log('period: ' + newPeriod);
+    fetch(process.env.REACT_APP_DEFAULT_URL+"/api/createTopic",{
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer '+ localStorage.getItem('jwtToken'),
+        'X-CSRFToken': csrftoken
+      },
+      body: JSON.stringify({'topic': newTopic, 'period': newPeriod}),
+      credentials: 'include'
+    }).then(res => res.json()).then(data => console.log('createTopic: ' + data.success)).catch((error)=>{
+      console.log("에러 발생:", error);
+    });
+  }
+
   return (
     <section className="bg-white dark: bg-zinc-900 h-full">
-
       <div className={"container px-6 py-10 mx-auto" + (open == true ? " blur" : "")}>
         <div id="menuToggle" className="cursor-pointer absolute top-0 right-0 m-5" onClick={toggleMenu}>
           <div className="h-1 w-6 bg-gray-700 my-1"></div>
@@ -107,14 +150,33 @@ function Main(){
             </button>
           </div>
           {
-            login == true ? 
+            login == true ? (
             <div>
               <p><span>{nickname}</span></p>
               <p>작성 댓글 수 <span id="nor">123</span></p>
               <p>투표 수 <span id="nov">123</span></p>
+              <button className="text-gray-600" onClick={logout}>로그아웃</button>
+            </div>
+            )
+            :(
+            <a href={KAKAO_AUTH_URL}><img src="https://cdn.imweb.me/upload/S20210304872ba49a108a8/89a68d1e3674a.png" alt="kakao Logo" className="w-8 h-8 mr-2 float-left"/><span className="flex-grow">카카오 로그인</span></a>
+            )
+          }
+          {
+            isAdmin == true ? 
+            <div>
+              <p className="mt-10 mb-4">새 토픽 만들기</p>
+              <input type="text" placeholder="토픽" className="w-full flex-1 border rounded-full px-4 py-2 focus:outline-none text-black text-sm" onChange={handleNewTopicChange} id="newTopic"/>
+              <label>기간</label>
+              <input name="period" type="number" className="text-black w-10 mt-4" onChange={handleNewPeriodChange} id="newPeriod"/>
+                    
+              <button className="bg-gray-700 hover:bg-blue-600 text-white font-semibold py-1 px-2 rounded shadow mt-3 float-right" onClick={createTopic}>
+                만들기
+              </button>
             </div>
             :
-            <a href={KAKAO_AUTH_URL}><img src="https://cdn.imweb.me/upload/S20210304872ba49a108a8/89a68d1e3674a.png" alt="kakao Logo" className="w-8 h-8 mr-2 float-left"/><span className="flex-grow">카카오 로그인</span></a>
+            <div>
+            </div>
           }
           </div>
         </div>
@@ -136,6 +198,7 @@ function Main(){
         open == true ? <Modal isOpen={isOpen} modalData={modalData} /> : null
         
       }
+      
     </section >
   );
 }
@@ -337,5 +400,7 @@ const checkTokenExpiration = (token) => {
     return true; // 디코딩 실패 시 만료된 것으로 간주
   }
 };
+
+
 
 export default App;

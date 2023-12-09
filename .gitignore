@@ -22,3 +22,5 @@ yarn-error.log*
 .env
 
 colosseum-react/.env
+
+db.sqlite3

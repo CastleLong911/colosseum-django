@@ -1,8 +1,8 @@
 from django.http import JsonResponse, HttpResponse
-import requests, os, jwt, datetime
-from .models import CustomUser
+import requests, os, jwt, datetime, json
+from .models import CustomUser, RoomInformation
 from django.contrib.auth import login, logout
-from dotenv import load_dotenv
+from django.middleware.csrf import get_token
 
 def auth_kakao(request):
     if request.method == 'GET':
@@ -45,7 +45,9 @@ def auth_kakao(request):
                     'kakaoId': userData.get("id"),
                     'nickname': kakao_account.get("profile").get("nickname"),
                     'profileImageUrl': kakao_account.get("profile").get("profile_image_url"),
-                    'token': jwt_token
+                    'token': jwt_token,
+                    'isAdmin': user.is_admin,
+                    'csrftoken': get_token(request)
                 }
                 return JsonResponse(result)
         except Exception as e:
@@ -60,3 +62,52 @@ def auth_kakao(request):
 def auth_logout(request):
     logout(request)
     return JsonResponse({'result': 'success'})
+
+def create_topic(request):
+    if request.method == 'POST':
+        try:
+            token = getTokenFromHeader(request)
+            token = checkToken(token)
+            if token is None:
+                print('token')
+                return JsonResponse({'success': False, 'msg': 'Token is invalid'})
+            print(token)
+            if checkAdmin(token['kakao_id']) is not True:
+                print('no admin')
+                return JsonResponse({'success': False, 'msg': 'You are not admin'})
+
+            data = json.loads(request.body)
+            print('post: ', data.get('topic'))
+            topic = data.get('topic')
+            period = data.get('period')
+            print('hello', topic, period)
+            RoomInformation.objects.create(
+                topic=topic,
+                period=period
+            )
+            return JsonResponse({'success': True})
+        except Exception as e:
+            print('error', e)
+            return JsonResponse({'success': False})
+    else:
+        return JsonResponse({'success': 'false', 'msg': 'invalid access'})
+
+
+def getTokenFromHeader(request):
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+    if auth_header.startswith('Bearer '):
+        return auth_header.split(' ')[1]
+    return None
+
+def checkToken(token):
+    try:
+        decoded = jwt.decode(token, str(os.getenv('CLIENT_ID')), algorithms=str(os.getenv('ALGORITHM')))
+        return decoded
+    except Exception as e:
+        print(e)
+        return None
+
+def checkAdmin(id):
+    user = CustomUser.objects.get(kakao_id=id)
+    print('isAdmin: ' + str(user.is_admin))
+    return user.is_admin
