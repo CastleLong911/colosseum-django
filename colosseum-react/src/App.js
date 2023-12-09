@@ -110,7 +110,11 @@ function Main(){
       },
       body: JSON.stringify({'topic': newTopic, 'period': newPeriod}),
       credentials: 'include'
-    }).then(res => res.json()).then(data => console.log('createTopic: ' + data.success)).catch((error)=>{
+    }).then(res => res.json()).then(data => {
+      console.log('createTopic: ' + data.success); 
+      setNewTopic('');
+      setNewPeriod(0);
+    }).catch((error)=>{ 
       console.log("에러 발생:", error);
     });
   }
@@ -166,9 +170,9 @@ function Main(){
             isAdmin == true ? 
             <div>
               <p className="mt-10 mb-4">새 토픽 만들기</p>
-              <input type="text" placeholder="토픽" className="w-full flex-1 border rounded-full px-4 py-2 focus:outline-none text-black text-sm" onChange={handleNewTopicChange} id="newTopic"/>
+              <input type="text" placeholder="토픽" className="w-full flex-1 border rounded-full px-4 py-2 focus:outline-none text-black text-sm" value={newTopic} onChange={handleNewTopicChange} id="newTopic"/>
               <label>기간</label>
-              <input name="period" type="number" className="text-black w-10 mt-4" onChange={handleNewPeriodChange} id="newPeriod"/>
+              <input name="period" type="number" className="text-black w-10 mt-4" value={newPeriod} onChange={handleNewPeriodChange} id="newPeriod"/>
                     
               <button className="bg-gray-700 hover:bg-blue-600 text-white font-semibold py-1 px-2 rounded shadow mt-3 float-right" onClick={createTopic}>
                 만들기
