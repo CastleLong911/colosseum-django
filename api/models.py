@@ -29,10 +29,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class RoomInformation(models.Model):
     roomId = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
-    pro = models.IntegerField(default=0)
-    con = models.IntegerField(default=0)
+    pros = models.IntegerField(default=0)
+    cons = models.IntegerField(default=0)
     topic = models.CharField(max_length=200)
     period = models.IntegerField(default=7)
+    replies = models.IntegerField(default=0)
 
     def __str__(self):
         return self.topic

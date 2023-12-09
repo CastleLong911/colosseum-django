@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponse
 import requests, os, jwt, datetime, json
 from .models import CustomUser, RoomInformation
 from django.contrib.auth import login, logout
-from django.middleware.csrf import get_token
+from django.core import serializers
 
 def auth_kakao(request):
     if request.method == 'GET':
@@ -47,7 +47,6 @@ def auth_kakao(request):
                     'profileImageUrl': kakao_account.get("profile").get("profile_image_url"),
                     'token': jwt_token,
                     'isAdmin': user.is_admin,
-                    'csrftoken': get_token(request)
                 }
                 return JsonResponse(result)
         except Exception as e:
@@ -91,6 +90,17 @@ def create_topic(request):
             return JsonResponse({'success': False})
     else:
         return JsonResponse({'success': 'false', 'msg': 'invalid access'})
+
+def getRoomInfoAll(request):
+    if request.method == 'GET':
+        rooms = RoomInformation.objects.all().order_by('-created_at')
+        data = serializers.serialize('json', rooms)
+        print(data)
+
+        return JsonResponse(data, safe=False)
+
+
+
 
 
 def getTokenFromHeader(request):

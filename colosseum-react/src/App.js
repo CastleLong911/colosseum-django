@@ -9,16 +9,6 @@ import { jwtDecode } from 'jwt-decode';
 import { getCookie } from './csrftoken';
 
 function App() {
-  //백엔드 연결시 아래 쓰셈
-  /*
-  let [db, setDB] = useState([]);
-  useEffect(() => {
-    fetch("/api/information").then(res => res.json()).then(data => setDB(data)).catch((error) => {
-      console.log("에러 발생:", error); // 에러 메시지 출력
-    });;
-    console.log(db);
-  }, []);
-*/
 
   return (
     <div className="h-full">
@@ -42,23 +32,24 @@ function Main(){
   let [isAdmin, setIsAdmin] = useState(false);
   let [newTopic, setNewTopic] = useState('');
   let [newPeriod, setNewPeriod] = useState();
+  const [rooms, setRooms] = useState([]);
+  useEffect(() => {
+    fetchRooms();
+    
+  }, []);
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
 
   useEffect(() => {
-    // 토큰 확인 및 처리 로직을 별도의 함수로 분리
     const checkTokenAndHandle = () => {
       const token = localStorage.getItem('jwtToken');
-      console.log(token);
       if (token && checkTokenExpiration(token)) {
         // 토큰 만료
         console.log('bad');
         isLogin(false);
         fetch("/api/logout").then(res => console.log(res));
       } else if (token && !checkTokenExpiration(token)) {
-        // 토큰 유효
-        console.log('good');
         isLogin(true);
         setNickname(localStorage.getItem('nickname'));
         setKakaoId(localStorage.getItem('kakaoId'));
@@ -66,22 +57,18 @@ function Main(){
         if(localStorage.getItem('isAdmin') == 'true'){
           setIsAdmin(true);
         }
-        // 이 변수들을 사용하는 로직 구현
       }
     };
-    // 처음 마운트될 때 즉시 실행
     checkTokenAndHandle();
-  
-    // 그리고 60초마다 반복 실행
     const interval = setInterval(checkTokenAndHandle, 60000);
   
-    return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 정리
+    return () => clearInterval(interval);
   }, []);
 
   const logout = () => {
     console.log(process.env.REACT_APP_DEFAULT_URL);
     fetch(process.env.REACT_APP_DEFAULT_URL+"/api/logout").then(res => res.json).then(data => console.log('logout: ' + data)).catch((error) => {
-      console.log("에러 발생:", error); // 에러 메시지 출력
+      console.log("에러 발생:", error);
     });
     localStorage.clear();
     isLogin(false);
@@ -98,8 +85,6 @@ function Main(){
 
   const createTopic = () => {
     const csrftoken = getCookie('csrftoken');
-    console.log('topic: ' + newTopic);
-    console.log('period: ' + newPeriod);
     fetch(process.env.REACT_APP_DEFAULT_URL+"/api/createTopic",{
       method: 'POST',
       headers: {
@@ -111,16 +96,29 @@ function Main(){
       body: JSON.stringify({'topic': newTopic, 'period': newPeriod}),
       credentials: 'include'
     }).then(res => res.json()).then(data => {
-      console.log('createTopic: ' + data.success); 
       setNewTopic('');
       setNewPeriod(0);
+      fetchRooms();
     }).catch((error)=>{ 
       console.log("에러 발생:", error);
     });
   }
 
+  const fetchRooms = async () => {
+    try {
+      const response = await fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getRoomInfoAll");
+      if (!response.ok) {
+        console.log('error!');
+      }
+      const data = await response.json();
+      setRooms(JSON.parse(data));
+      } catch (error) {
+          console.error("Fetching data failed", error);
+      }
+  };
+  
   return (
-    <section className="bg-white dark: bg-zinc-900 h-full">
+    <section className="bg-zinc-900 h-full">
       <div className={"container px-6 py-10 mx-auto" + (open == true ? " blur" : "")}>
         <div id="menuToggle" className="cursor-pointer absolute top-0 right-0 m-5" onClick={toggleMenu}>
           <div className="h-1 w-6 bg-gray-700 my-1"></div>
@@ -188,13 +186,11 @@ function Main(){
       <div className="grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 sm:grid-cols-2 xl:grid-cols-3 lg:grid-cols-3">
         
         {
-          /*
-          db.map(function (a, i) {
+          rooms.map(function (a, i) {
             return (
-              <Card id={a.id} topic={a.topic} pros={a.pros} cons={a.cons} date={a.date} period={a.period} reply={a.reply} isOpen={isOpen} open={open} setModalData={setModalData} />
+              <Card id={a.pk} topic={a.fields.topic} pros={a.fields.pros} cons={a.fields.cons} date={a.fields.created_at} period={a.fields.period} reply={a.fields.replies} isOpen={isOpen} open={open} setModalData={setModalData} />
             )
           })
-          */
         }
       </div>
     </div>
@@ -208,18 +204,42 @@ function Main(){
 }
 
 function Card(props) {
+  const formatDate = (date) => {
+    const newDate = new Date(date);
+    return newDate.toLocaleDateString('ko-KR');
+  }
 
-  var date = new Date(props.date);
-  date.setDate(date.getDate() + props.period);
+  const addedDate = (date, period) => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + period);
+    return newDate.toLocaleDateString('ko-KR');
+  }
 
-
+  const dDay = (date, period) => {
+    const today = new Date();
+    const target = new Date(date);
+    target.setDate(target.getDate() + period);
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const targetDate = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  
+    const diff = targetDate - todayDate;
+    const diffDays = diff / (1000 * 60 * 60 * 24);
+  
+    if (diffDays === 0) {
+      return 'D-Day';
+    } else if (diffDays > 0) {
+      return 'D-' + diffDays;
+    } else {
+      return 'D+' + Math.abs(diffDays);
+    }
+  };
 
   /*408px */
   return (
     <div className="w-full">
 
       <div className="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600 flex items-center">
-        <div className="w-full h-full bg-white dark:bg-zinc-800 h-52 rounded-lg " onClick={() => { props.isOpen(true); console.log(props.open); props.setModalData({ id: props.id, topic: props.topic, reply: props.reply, pros: props.pros, cons: props.cons, date: props.date }) }}>
+        <div className="w-full h-64 bg-white dark:bg-zinc-800 h-52 rounded-lg" onClick={() => { props.isOpen(true); console.log(props.open); props.setModalData({ id: props.id, topic: props.topic, reply: props.reply, pros: props.pros, cons: props.cons, date: props.date }) }}>
           <div className="flex flex-col items-center justify-evenly h-full p-3">
             <h4 className="text-xl font-bold text-navy-700 text-black dark:text-white  text-center mt-3 w-full">
               {props.topic}
@@ -234,35 +254,35 @@ function Card(props) {
               </div>
               <div className="flex flex-col items-center justify-center">
                 <p className="text-2xl font-bold text-navy-700 text-black dark:text-white whitespace-nowrap">
-                  {(props.pros / (props.pros + props.cons)).toFixed(4) * 100}%
+                  {props.pros == 0 ? '0' : (props.pros / (props.pros + props.cons)).toFixed(4) * 100}%
                 </p>
                 <p className="text-sm font-normal text-gray-600 dark:text-white whitespace-nowrap">찬성</p>
               </div>
               <div className="flex flex-col items-center justify-center">
                 <p className="text-2xl font-bold text-navy-700 text-black dark:text-white whitespace-nowrap">
-                  15위
+                  {props.pros + props.cons}
                 </p>
-                <p className="text-sm font-normal text-gray-600 dark:text-white whitespace-nowrap">인기</p>
+                <p className="text-sm font-normal text-gray-600 dark:text-white whitespace-nowrap">투표수</p>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <h1 className="w-56 h-6 mt-4 bg-gray-200 rounded-lg dark:bg-zinc-800 dark:text-white">
-        <span className="ml-3 font-bold">{props.date} - {date.getFullYear()}-{(date.getMonth() + 1).toString().padStart(2, '0')}-{date.getDate().toString().padStart(2, '0')}</span>
+      <h1 className="h-6 mt-4 bg-gray-200 rounded-lg dark:bg-zinc-800 dark:text-white w-fit pr-2">
+        <span className="ml-3 font-bold">{formatDate(props.date)} - {addedDate(props.date, props.period)}</span>
       </h1>
       <p className="w-24 h-6 mt-4 bg-gray-200 rounded-lg dark:bg-zinc-800 text-center">
-        <span className="font-bold text-sm dark:text-white">D{((Math.round((date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) * -1)}</span>
+        <span className="font-bold text-sm dark:text-white">{dDay(props.date, props.period)}</span>
       </p>
     </div>
   )
 }
 
 function Modal(props) {
-  let [pros, setPros] = useState(); // 찬성 갯수
-  let [cons, setCons] = useState(); // 반대 갯수
-  let [chat_pro, setChat_pro] = useState([]); // 찬성채팅들
-  let [chat_con, setChat_con] = useState([]); // 반대채팅들
+  let [pros, setPros] = useState();
+  let [cons, setCons] = useState();
+  let [chat_pro, setChat_pro] = useState([]);
+  let [chat_con, setChat_con] = useState([]);
 
 
   return (
@@ -394,14 +414,13 @@ function Modal(props) {
 const checkTokenExpiration = (token) => {
   try {
     const decodedToken = jwtDecode(token);
-    console.log(decodedToken);
-    const expirationTime = decodedToken.exp * 1000; // JWT exp는 초 단위로 되어 있으므로 밀리초로 변환
+    const expirationTime = decodedToken.exp * 1000;
     const currentTime = Date.now();
 
     return expirationTime < currentTime;
   } catch (error) {
     console.error('Token decoding error:', error);
-    return true; // 디코딩 실패 시 만료된 것으로 간주
+    return true; 
   }
 };
 
