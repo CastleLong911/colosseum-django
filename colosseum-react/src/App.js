@@ -3,10 +3,11 @@ import './App.css';
 import { useState, useEffect } from 'react';
 import data from './data'; //백엔드 연결시 지우셈
 import { KAKAO_AUTH_URL } from './OAuth';
-import {Routes, Route, Link} from 'react-router-dom';
+import {Routes, Route, Link, useNavigate} from 'react-router-dom';
 import LoginHandler from './loginHandler';
 import { jwtDecode } from 'jwt-decode';
 import { getCookie } from './csrftoken';
+import TopicRoom from './topicRoom';
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Main/>}></Route>
         <Route path="/api/login/kakao" element={<LoginHandler/>}></Route>
+        <Route path="/room" element={<TopicRoom/>}></Route>
       </Routes>
     </div>
   );
@@ -204,6 +206,8 @@ function Main(){
 }
 
 function Card(props) {
+  const topicId = props.id;
+
   const formatDate = (date) => {
     const newDate = new Date(date);
     return newDate.toLocaleDateString('ko-KR');
@@ -234,12 +238,18 @@ function Card(props) {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleCardClick = () =>{
+    navigate('/room?topic=' + topicId);
+  }
+
   /*408px */
   return (
     <div className="w-full">
 
       <div className="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600 flex items-center">
-        <div className="w-full h-64 bg-white dark:bg-zinc-800 h-52 rounded-lg" onClick={() => { props.isOpen(true); console.log(props.open); props.setModalData({ id: props.id, topic: props.topic, reply: props.reply, pros: props.pros, cons: props.cons, date: props.date }) }}>
+        <div className="w-full h-64 bg-white dark:bg-zinc-800 h-52 rounded-lg" onClick={handleCardClick}>
           <div className="flex flex-col items-center justify-evenly h-full p-3">
             <h4 className="text-xl font-bold text-navy-700 text-black dark:text-white  text-center mt-3 w-full">
               {props.topic}
