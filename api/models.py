@@ -37,3 +37,14 @@ class RoomInformation(models.Model):
 
     def __str__(self):
         return self.topic
+
+class Vote(models.Model):
+    roomId = models.ForeignKey(RoomInformation, on_delete=models.CASCADE, related_name='votes')
+    isPro = models.BooleanField()
+    kakao_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='votes')
+    nickname = models.CharField(max_length=100)
+
+    def save(self, *args, **kwargs):
+        if not self.nickname:
+            self.nickname = self.kakao_id.nickname
+        super().save(*args, **kwargs)

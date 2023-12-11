@@ -36,6 +36,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'corsheaders',
     'api',
     'django.contrib.admin',
@@ -79,7 +81,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'colosseum.wsgi.application'
-
+ASGI_APPLICATION = "colosseum.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -165,3 +167,9 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'csrftoken',  # 추가된 헤더
 ]
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': "channels.layers.InMemoryChannelLayer"
+        }
+    }
