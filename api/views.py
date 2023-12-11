@@ -99,6 +99,18 @@ def getRoomInfoAll(request):
 
         return JsonResponse(data, safe=False)
 
+def getRoomInfo(request):
+    if request.method == 'GET':
+        try:
+            topic = request.GET.get('topic', '').replace('-', '')
+            room = RoomInformation.objects.get(roomId=topic)
+            print(room)
+            data = serializers.serialize('json', [room])
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'error': 'fail!'})
+
 
 
 
