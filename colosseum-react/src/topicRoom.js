@@ -16,7 +16,11 @@ const TopicRoom = (props) => {
     const [kakaoId, setKakaoId] = useState(null);
     const topicId = new URL(window.location.href).searchParams.get("topic");
     const [message, setMessage] = useState('');
-
+    const [proMessages, setProMessages] = useState([]);
+    const [conMessages, setConMessages] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
 
     const proBarStyle = {
         width: pros == 0 ? '0%' : ((pros / (pros+cons) * 100).toFixed(2))+ '%'
@@ -129,6 +133,16 @@ const TopicRoom = (props) => {
             }
             else if(data.type == 'MSG'){
                 console.log(data);
+                if(data.isPro == true){
+                    setProMessages(prev => [...prev, data]);
+                    console.log(proMessages);
+                }else{
+                    setConMessages(prev => [...prev, data]);
+                    console.log(conMessages);
+                }
+            }
+            else if(data.type == 'ERR'){
+                showAlert('경고', data.message);
             }
         };
 
@@ -143,8 +157,19 @@ const TopicRoom = (props) => {
         };
     }, []);
 
+    useEffect(() => {
+        console.log("proMessages가 업데이트되었습니다:", proMessages);
+      }, [proMessages]);
+      
+      useEffect(() => {
+        console.log("conMessages가 업데이트되었습니다:", conMessages);
+      }, [conMessages]);
 
     const sendMessage = () => {
+        if(localStorage.getItem('kakaoId') == null){
+            showAlert('경고', '로그인을 먼저 해주세요.');
+            return;
+        }
         if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
             chatSocket.send(JSON.stringify({ 'type': 'MSG', 'message': message, 'kakaoId': kakaoId }));
         } else {
@@ -154,6 +179,10 @@ const TopicRoom = (props) => {
     };
 
     const sendVote = (isPro) => {
+        if(localStorage.getItem('kakaoId') == null){
+            showAlert('경고', '로그인을 먼저 해주세요.');
+            return;
+        }
         if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
             chatSocket.send(JSON.stringify({ 'type': 'VOTE', 'isPro': isPro, 'kakaoId': kakaoId }));
         } else {
@@ -171,24 +200,34 @@ const TopicRoom = (props) => {
         }
     }
 
+    const showAlert = (title, message) =>{
+        setModalTitle(title);
+        setModalMessage(message);
+        setShowModal(true);
+        setTimeout(() => {
+            setShowModal(false);
+        }, 1000);
+    }
+
 
     return (
         <div className="bg-zinc-900">
-            <div id="alertModal" className="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-
-                <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                    <div className="mt-3 text-center">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="alertModalTitle">
-                            Warning!
-                        </h3>
-                        <div className="mt-2 px-7 py-3">
-                            <p className="text-sm text-gray-500" id="alertModalBody">
-                                Something went wrong.
-                            </p>
+            { showModal &&
+                <div id="alertModal" className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div className="mt-3 text-center">
+                            <h3 className="text-lg leading-6 font-medium text-gray-900" id="alertModalTitle">
+                                {modalTitle}
+                            </h3>
+                            <div className="mt-2 px-7 py-3">
+                                <p className="text-sm text-gray-500" id="alertModalBody">
+                                    {modalMessage}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            }
             <div className="left-10 justify-start absolute top-4 z-50">
                 <div className="flex items-center justify-start rounded">
                     <button className="bg-gray-700 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow"
@@ -249,7 +288,11 @@ const TopicRoom = (props) => {
                         <div className={"h-full flex-1 overflow-y-auto p-4 border-4 border-solid border-gray-500 rounded-xl duration-500 ease-in-out w-full " + (isWide ? '' : ('section transition-transform ' + (isLeft ? ' ' : ' -translate-x-double')))}
                             id="sectionA">
                             <div className="flex flex-col space-y-2 msgProContainer">
-                                
+                                {proMessages.map(function (a, i) {
+                                    return (
+                                        <Message nickname={a.nickname} msg={a.message} sender={a.sender} kakaoId={kakaoId} date={a.date}/>
+                                    )
+                                })}
                                 <div className="flex">
                                     <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
                                         <div className="text-sm align-text-bottom text-left">
@@ -325,6 +368,11 @@ const TopicRoom = (props) => {
                         <div className={"h-full flex-1 overflow-y-auto p-4 border-4 border-solid border-gray-500 rounded-xl " + (isWide ? '' : ('section transition-transform duration-500 ease-in-out transform ' + (isLeft ? ' translate-x-full' : ' -translate-x-full')))}
                             id="sectionB">
                             <div className="flex flex-col space-y-2 msgConContainer">
+                                {conMessages.map(function (a, i) {
+                                    return (
+                                        <Message nickname={a.nickname} msg={a.message} sender={a.sender} kakaoId={kakaoId} date={a.date}/>
+                                    )
+                                })}
                                 <div className="flex">
                                     <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
                                         <div className="text-sm align-text-bottom text-left">
@@ -412,16 +460,29 @@ const TopicRoom = (props) => {
     );
 };
 
-const message = (props) => {
+const Message = (props) => {
     return (
+        props.sender == props.kakaoId ?
+        <div class="flex justify-end">
+            <div class="bg-blue-200 text-black p-2 rounded-lg max-w-xs">
+                <div class="text-sm align-text-bottom text-right">
+                    나
+                </div>
+                    {props.msg}
+                <div class="text-sm w-full align-text-bottom text-right">
+                    {props.date}
+                </div>
+            </div>
+        </div>
+        :
         <div className="flex">
             <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
                 <div className="text-sm align-text-bottom text-left">
-                    최0현
+                    {props.nickname}
                 </div>
-                내같은 기운을 가진 놈은 짬뽕을 먹었어야 맞는긴데~~ 꼬이따~ 꼬이써~~
+                {props.msg}
                 <div className="text-sm w-full align-text-bottom text-right">
-                    2023-11-26 23:25:17
+                {props.date}
                 </div>
             </div>
         </div>

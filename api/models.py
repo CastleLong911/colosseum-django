@@ -4,6 +4,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 
+def get_default_user():
+    return CustomUser.objects.get_or_create(kakao_id='default', defaults={'nickname': '탈퇴한 유저'})[0]
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, kakao_id, nickname, profileImageUrl, password=None, **extra_fields):
         user = self.model(kakao_id=kakao_id, nickname=nickname, profileImageUrl=profileImageUrl, **extra_fields)
@@ -13,7 +16,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    kakao_id = models.CharField(max_length=255, unique=True)
+    kakao_id = models.CharField(max_length=255, unique=True, primary_key=True, default='탈퇴한유저')
     nickname = models.CharField(max_length=255)
     profileImageUrl = models.URLField()
     is_admin = models.BooleanField(default=False)
@@ -41,10 +44,18 @@ class RoomInformation(models.Model):
 class Vote(models.Model):
     roomId = models.ForeignKey(RoomInformation, on_delete=models.CASCADE, related_name='votes')
     isPro = models.BooleanField()
-    kakao_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='votes')
+    kakao_id = models.ForeignKey(CustomUser, on_delete=models.SET(get_default_user), related_name='votes')
     nickname = models.CharField(max_length=100)
 
     def save(self, *args, **kwargs):
         if not self.nickname:
             self.nickname = self.kakao_id.nickname
         super().save(*args, **kwargs)
+
+class Message(models.Model):
+    roomId = models.ForeignKey(RoomInformation, on_delete=models.CASCADE, related_name='messages')
+    isPro = models.BooleanField()
+    kakao_id = models.ForeignKey(CustomUser, on_delete=models.SET(get_default_user), related_name='messages')
+    nickname = models.CharField(max_length=100)
+    created_at = models.DateTimeField(default=timezone.now)
+    message = models.CharField(max_length=255, default='')

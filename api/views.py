@@ -48,6 +48,7 @@ def auth_kakao(request):
                     'token': jwt_token,
                     'isAdmin': user.is_admin,
                 }
+                print('admin?', user.is_admin)
                 return JsonResponse(result)
         except Exception as e:
             print(e)
