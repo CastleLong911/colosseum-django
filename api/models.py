@@ -20,8 +20,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=255)
     profileImageUrl = models.URLField()
     is_admin = models.BooleanField(default=False)
-    replies = models.IntegerField(default=0)
-    votes = models.IntegerField(default=0)
+    nor = models.IntegerField(default=0)
+    nov = models.IntegerField(default=0)
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'kakao_id'
