@@ -28,9 +28,13 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-@#qj4zubeip@f+t-@#zco1urtq9@n_m0%+bv!7_3kbxl=08lpt'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'http://debatearena.me',
+    'http://ec2-54-180-201-195.ap-northeast-2.compute.amazonaws.com',
+    'http://54.180.201.195',
+]
 
 
 # Application definition
@@ -139,11 +143,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:3000',
+    'http://debatearena.me',
+    'http://ec2-54-180-201-195.ap-northeast-2.compute.amazonaws.com',
+    'http://54.180.201.195',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:3000',
+    'http://debatearena.me',
+    'http://ec2-54-180-201-195.ap-northeast-2.compute.amazonaws.com',
+    'http://54.180.201.195',
 ]
 CSRF_COOKIE_HTTPONLY = False
 
