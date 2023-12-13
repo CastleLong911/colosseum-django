@@ -34,6 +34,8 @@ ALLOWED_HOSTS = [
     'http://debatearena.me',
     'http://ec2-54-180-201-195.ap-northeast-2.compute.amazonaws.com',
     'http://54.180.201.195',
+    '.debatearena.me',
+    '.ec2-54-180-201-195.ap-northeast-2.compute.amazonaws.com'
 ]
 
 
