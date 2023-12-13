@@ -12,7 +12,7 @@ const LoginHandeler = (props) => {
       
       await axios({
         method: "get",
-        url: `http://debatearena:8000/api/login/kakao?code=${code}`,
+        url: `http://debatearena.me:8000/api/login/kakao?code=${code}`,
         headers: {
           //"Content-Type": "application/json;charset=utf-8", //json형태로 데이터를 보내겠다는뜻
           //"Access-Control-Allow-Origin": "*", //이건 cors 에러때문에 넣어둔것. 당신의 프로젝트에 맞게 지워도됨
