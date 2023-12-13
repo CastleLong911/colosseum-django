@@ -1,7 +1,7 @@
 import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from .models import Vote, CustomUser, Message
+from .models import Vote, CustomUser, Message, RoomInformation
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -41,6 +41,7 @@ class ChatConsumer(WebsocketConsumer):
                 )
                 print(text_data_json['isPro'], sender, room_id)
                 vote.save()
+                countRoomVote(room_id)
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
@@ -51,17 +52,29 @@ class ChatConsumer(WebsocketConsumer):
                 )
         elif type == 'MSG':
             if Vote.objects.filter(roomId_id=room_id, kakao_id_id=sender).exists():
+                isPro = Vote.objects.get(roomId_id=room_id, kakao_id_id=sender).isPro
+                nickname = mask_name(str(CustomUser.objects.get(kakao_id=sender).nickname))
+                msg = Message(
+                    isPro=isPro,
+                    nickname=nickname,
+                    kakao_id_id=sender,
+                    roomId_id=room_id,
+                    message=text_data_json['message']
+                )
+                msg.save()
+                countRoomMsg(room_id)
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
                         'type': 'MSG',
-                        'room_id': room_id,
                         'message': text_data_json['message'],
-                        'nickname': mask_name(str(CustomUser.objects.get(kakao_id=sender).nickname)),
-                        'isPro': Vote.objects.get(roomId_id=room_id, kakao_id_id=sender).isPro,
-                        'sender': sender
+                        'nickname': nickname,
+                        'isPro': isPro,
+                        'sender': sender,
+                        'msg': msg
                     }
                 )
+
             else:
                 self.send(text_data=json.dumps({
                     'type': 'ERR',
@@ -69,33 +82,24 @@ class ChatConsumer(WebsocketConsumer):
                 }))
 
     def MSG(self, event):
-        # Receive message from room group
+
         message = event['message']
         sender = event['sender']
         nickname = event['nickname']
         isPro = event['isPro']
-        room_id = event['room_id']
-        # Send message to WebSocket
-        msg = Message(
-            isPro=isPro,
-            nickname=nickname,
-            kakao_id_id=sender,
-            roomId_id=room_id,
-            message=message
-        )
-        msg.save()
+        msg = event['msg']
+
         self.send(text_data=json.dumps({
             'type': 'MSG',
             'isPro': isPro,
             'message': message,
-            'sender': sender,
+            'kakao_id': sender,
             'nickname': nickname,
-            'date': str(msg.created_at)[:16]
+            'created_at': str(msg.created_at)[:16]
         }))
     def VOTE(self, event):
         isPro = event['isPro']
         sender = event['sender']
-        # Send message to WebSocket
         self.send(text_data=json.dumps({
             'type': 'VOTE',
             'isPro': isPro,
@@ -109,3 +113,17 @@ def mask_name(name):
         return name[0] + "O"
     else:
         return name[0] + ("O" * (len(name) - 2)) + name[-1]
+
+def countRoomVote(room_id):
+    room = RoomInformation.objects.get(roomId=room_id)
+    pros = Vote.objects.filter(roomId_id=room_id, isPro=True).count()
+    cons = Vote.objects.filter(roomId_id=room_id, isPro=False).count()
+    room.pros = pros
+    room.cons = cons
+    room.save()
+
+def countRoomMsg(room_id):
+    room = RoomInformation.objects.get(roomId=room_id)
+    replies = Message.objects.filter(roomId_id=room_id).count()
+    room.replies = replies
+    room.save()

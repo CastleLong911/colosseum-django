@@ -1,6 +1,6 @@
 from django.http import JsonResponse, HttpResponse
 import requests, os, jwt, datetime, json
-from .models import CustomUser, RoomInformation
+from .models import CustomUser, RoomInformation, Message
 from django.contrib.auth import login, logout
 from django.core import serializers
 
@@ -112,8 +112,37 @@ def getRoomInfo(request):
             print(e)
             return JsonResponse({'error': 'fail!'})
 
+def getInitMsg(request):
+    if request.method == 'GET':
+        try:
+            topic = request.GET.get('topic', '').replace('-', '')
+            proMsg = Message.objects.filter(roomId_id=topic, isPro=True).order_by('-created_at')[:30]
+            conMsg = Message.objects.filter(roomId_id=topic, isPro=False).order_by('-created_at')[:30]
+            proData = serializers.serialize('json', proMsg)
+            conData = serializers.serialize('json', conMsg)
+            data = {'proMsg': proData, 'conMsg': conData}
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'error': 'fail!'})
 
+def getMsg(request):
+    try:
+        topic = request.GET.get('topic', '').replace('-', '')
+        isPro = bool(request.GET.get('isPro', ''))
+        start = int(request.GET.get('start', ''))
+        if isPro:
+            msg = Message.objects.filter(roomId_id=topic, isPro=True).order_by('-created_at')[start:start+30]
+            data = serializers.serialize('json', msg)
+            return JsonResponse(data, safe=False)
+        else:
+            msg = Message.objects.filter(roomId_id=topic, isPro=False).order_by('-created_at')[start:start+30]
+            data = serializers.serialize('json', msg)
+            return JsonResponse(data, safe=False)
 
+    except Exception as e:
+        print(e)
+        return JsonResponse({'error': 'fail!'})
 
 
 def getTokenFromHeader(request):

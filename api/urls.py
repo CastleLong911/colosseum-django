@@ -7,4 +7,6 @@ urlpatterns = [
     path('createTopic', views.create_topic, name='createTopic'),
     path('getRoomInfoAll', views.getRoomInfoAll, name='getRoomInfoAll'),
     path('getRoomInfo', views.getRoomInfo, name='getRoomInfo'),
+    path('getInitMsg', views.getInitMsg, name='getInitMsg'),
+    path('getMsg', views.getMsg, name='getMsg'),
 ]

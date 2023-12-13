@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect} from "react";
+import { useState, useEffect, useRef} from "react";
 import axios from "axios";
 const TopicRoom = (props) => {
     const [isWide, setIsWide] = useState(window.matchMedia("(min-width: 640px)").matches);
-    const [isLeft, setIsLeft] = useState('true');
+    const [isLeft, setIsLeft] = useState(true);
     const [isDragging, setIsDragging] = useState(false);
     const [startX, setStartX] = useState(0);
     const [topic, setTopic] = useState('');
@@ -21,6 +21,16 @@ const TopicRoom = (props) => {
     const [showModal, setShowModal] = useState(false);
     const [modalTitle, setModalTitle] = useState("");
     const [modalMessage, setModalMessage] = useState("");
+    const proScroll = useRef(null);
+    const conScroll = useRef(null);
+    const [proScrollBottom, setProScrollBottom] = useState(true);
+    const [conScrollBottom, setConScrollBottom] = useState(true);
+    const [proScrollTop, setProScrollTop] = useState(false);
+    const [conScrollTop, setConScrollTop] = useState(false);
+    const [proMessageSize, setProMessageSize] = useState(0);
+    const [conMessageSize, setConMessageSize] = useState(0);
+    const [prevProScrollHeight, setPrevProScrollHeight] = useState(0);
+    const [prevConScrollHeight, setPrevConScrollHeight] = useState(0);
 
     const proBarStyle = {
         width: pros == 0 ? '0%' : ((pros / (pros+cons) * 100).toFixed(2))+ '%'
@@ -52,6 +62,35 @@ const TopicRoom = (props) => {
             setIsDragging(false);
         }
     }
+
+    const checkProScrollBottom = () => {
+        const { scrollHeight, scrollTop, clientHeight } = proScroll.current;
+        if (scrollTop + clientHeight === scrollHeight) {
+            setProScrollBottom(true);
+        }
+        else {
+            setProScrollBottom(false);
+        }
+        if (scrollTop == 0){
+            setProScrollTop(true);
+        }
+        else setProScrollTop(false);
+    }
+
+
+    const checkConScrollBottom = () => {
+        const { scrollHeight, scrollTop, clientHeight } = conScroll.current;
+        if (scrollTop + clientHeight === scrollHeight) {
+            setConScrollBottom(true);
+        }
+        else setConScrollBottom(false);
+        if (scrollTop == 0){
+            setConScrollTop(true);
+        }
+        else setConScrollTop(false);
+    }
+
+
     axios.defaults.withCredentials = true;
     
     useEffect(() => {
@@ -63,7 +102,6 @@ const TopicRoom = (props) => {
                     console.log('error!');
                 }
                 const data = await response.json();
-                console.log(data);
                 const room = JSON.parse(data);
                 setTopic(room[0].fields.topic);
                 setCons(room[0].fields.cons);
@@ -74,12 +112,29 @@ const TopicRoom = (props) => {
                 } catch (error) {
                     console.error("Fetching data failed", error);
                 }
-            };
-            fetchRoom();
+        };
+        //입장시 메시지들 가져오는
+        const fetchMsg = async () =>{
+            try {
+                const response = await fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getInitMsg?topic=" + topicId);
+                if (!response.ok) {
+                    console.log('error!');
+                }
+                const data = await response.json();
+                const proMsg = JSON.parse(data.proMsg).map(item => item.fields).reverse();
+                const conMsg = JSON.parse(data.conMsg).map(item => item.fields).reverse();
+                setProMessages(proMsg);
+                setConMessages(conMsg);
+                } catch (error) {
+                    console.error("Fetching data failed", error);
+                }
+        }
+        fetchRoom();
+        fetchMsg();
     }, [props.history]);
 
     useEffect(() => {
-        //브라우저 사이즈 브레이크포인트
+        //브라우저 사이즈 브레이크포인트 & 스크롤 바텀 확인
         const handleResize = (e) => {
             setIsWide(e.matches);
             if(!isWide){
@@ -89,7 +144,17 @@ const TopicRoom = (props) => {
         const breakpoint = window.matchMedia("(min-width: 640px)");
         breakpoint.addListener(handleResize);
 
-        return () => breakpoint.removeListener(handleResize);
+        const proElement = proScroll.current;
+        proElement.addEventListener('scroll', checkProScrollBottom);
+
+        const conElement = conScroll.current;
+        conElement.addEventListener('scroll', checkConScrollBottom);
+
+        return () => {
+            breakpoint.removeListener(handleResize)
+            proElement.removeEventListener('scroll', checkProScrollBottom);
+            conElement.removeEventListener('scroll', checkConScrollBottom);
+        };
     }, []);
 
     useEffect(()=>{
@@ -117,6 +182,10 @@ const TopicRoom = (props) => {
     
     useEffect(() => {
         //웹소켓
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.close();
+        }
+
         const newChatSocket = new WebSocket(
             'ws://127.0.0.1:8000/ws/chat/' + topicId + '/'
         );
@@ -132,10 +201,9 @@ const TopicRoom = (props) => {
                 }
             }
             else if(data.type == 'MSG'){
-                console.log(data);
                 if(data.isPro == true){
                     setProMessages(prev => [...prev, data]);
-                    console.log(proMessages);
+                    
                 }else{
                     setConMessages(prev => [...prev, data]);
                     console.log(conMessages);
@@ -158,19 +226,74 @@ const TopicRoom = (props) => {
     }, []);
 
     useEffect(() => {
-        console.log("proMessages가 업데이트되었습니다:", proMessages);
+        if(proScrollBottom){
+            proScroll.current.scrollTop = proScroll.current.scrollHeight;
+        }
+        if(proScrollTop){
+            proScroll.current.scrollTop += proScroll.current.scrollHeight - prevProScrollHeight;
+            setProScrollTop(false);
+        }
       }, [proMessages]);
       
-      useEffect(() => {
-        console.log("conMessages가 업데이트되었습니다:", conMessages);
+    useEffect(() => {
+        if(conScrollBottom){
+            conScroll.current.scrollTop = conScroll.current.scrollHeight;
+        }
+        if(proScrollTop){
+            conScroll.current.scrollTop += conScroll.current.scrollHeight - prevConScrollHeight;
+            setConScrollTop(false);
+        }
       }, [conMessages]);
+
+    useEffect(() => {
+        console.log('proMessageSize 업데이트됨:', proMessageSize);
+    }, [proMessageSize]);
+
+
+    useEffect(() =>{
+        const getMsg = async (isPro) =>{
+            const start = isPro ? proMessages.length : conMessages.length
+            console.log(start);
+            try{
+                const response = await fetch(process.env.REACT_APP_DEFAULT_URL+ "/api/getMsg?topic=" + topicId + "&&isPro=" + (isPro ? "True" : "False") +"&&start=" + (isPro ? proMessageSize : conMessageSize));
+                if (!response.ok) {
+                    console.log('error!');
+                }
+                const data = await response.json();
+                const msgs= JSON.parse(data).map(item => item.fields).reverse();
+                if(isPro){
+                    setProMessages([...msgs, ...proMessages]);
+                }
+                else{
+                    setConMessages([...msgs, ...conMessages]);
+                }
+                console.log(msgs);
+            } catch (error) {
+                console.error("Fetching data failed", error);
+            }
+        }
+        if(proScrollTop){
+            setPrevProScrollHeight(proScroll.current.scrollHeight);
+            getMsg(true);
+            
+        }
+        else if(conScrollTop){
+            setPrevConScrollHeight(conScroll.current.scrollHeight);
+            getMsg(false);
+        }
+        
+    }, [proScrollTop, conScrollTop])
 
     const sendMessage = () => {
         if(localStorage.getItem('kakaoId') == null){
             showAlert('경고', '로그인을 먼저 해주세요.');
             return;
         }
+        if(message == ''){
+            return;
+        }
         if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            console.log(message);
             chatSocket.send(JSON.stringify({ 'type': 'MSG', 'message': message, 'kakaoId': kakaoId }));
         } else {
             console.error("WebSocket is not open.");
@@ -270,7 +393,8 @@ const TopicRoom = (props) => {
                                 <path d="M8.864 15.674c-.956.24-1.843-.484-1.908-1.42-.072-1.05-.23-2.015-.428-2.59-.125-.36-.479-1.012-1.04-1.638-.557-.624-1.282-1.179-2.131-1.41C2.685 8.432 2 7.85 2 7V3c0-.845.682-1.464 1.448-1.546 1.07-.113 1.564-.415 2.068-.723l.048-.029c.272-.166.578-.349.97-.484C6.931.08 7.395 0 8 0h3.5c.937 0 1.599.478 1.934 1.064.164.287.254.607.254.913 0 .152-.023.312-.077.464.201.262.38.577.488.9.11.33.172.762.004 1.15.069.13.12.268.159.403.077.27.113.567.113.856 0 .289-.036.586-.113.856-.035.12-.08.244-.138.363.394.571.418 1.2.234 1.733-.206.592-.682 1.1-1.2 1.272-.847.283-1.803.276-2.516.211a9.877 9.877 0 0 1-.443-.05 9.364 9.364 0 0 1-.062 4.51c-.138.508-.55.848-1.012.964l-.261.065zM11.5 1H8c-.51 0-.863.068-1.14.163-.281.097-.506.229-.776.393l-.04.025c-.555.338-1.198.73-2.49.868-.333.035-.554.29-.554.55V7c0 .255.226.543.62.65 1.095.3 1.977.997 2.614 1.709.635.71 1.064 1.475 1.238 1.977.243.7.407 1.768.482 2.85.025.362.36.595.667.518l.262-.065c.16-.04.258-.144.288-.255a8.34 8.34 0 0 0-.145-4.726.5.5 0 0 1 .595-.643h.003l.014.004.058.013a8.912 8.912 0 0 0 1.036.157c.663.06 1.457.054 2.11-.163.175-.059.45-.301.57-.651.107-.308.087-.67-.266-1.021L12.793 7l.353-.354c.043-.042.105-.14.154-.315.048-.167.075-.37.075-.581 0-.211-.027-.414-.075-.581-.05-.174-.111-.273-.154-.315l-.353-.354.353-.354c.047-.047.109-.176.005-.488a2.224 2.224 0 0 0-.505-.804l-.353-.354.353-.354c.006-.005.041-.05.041-.17a.866.866 0 0 0-.121-.415C12.4 1.272 12.063 1 11.5 1z"/>
                             </svg></div>
                     </div>
-                    {isWide ? 
+                
+                    {/*isWide ? 
                     <div className="labelDiv w-full text-2xl font-bold w-20 flex justify-around"><span className="text-gray-500">찬성</span> <span className="text-gray-500">반대</span></div>
                      : 
                      (isLeft ? 
@@ -280,155 +404,41 @@ const TopicRoom = (props) => {
                         <div className="labelDiv w-full text-2xl font-bold w-20 flex justify-around"><span className="text-gray-500">반대</span></div>
 
                         )
+                     */}
+                    {
+                    <div className="labelDiv w-auto text-2xl font-bold w-20 flex justify-around">
+                        <span className="text-gray-500">{isLeft ? '찬성' : '반대'}</span> 
+                        {isWide &&
+                        <span className="text-gray-500">반대</span>}
+                    </div>
+                     
                     }
 
 
 
                     <div className="flex h-full w-[200%] sm:w-full">
-                        <div className={"h-full flex-1 overflow-y-auto p-4 border-4 border-solid border-gray-500 rounded-xl duration-500 ease-in-out w-full " + (isWide ? '' : ('section transition-transform ' + (isLeft ? ' ' : ' -translate-x-double')))}
+                        <div ref={proScroll} className={"h-full flex-1 overflow-y-auto p-4 border-4 border-solid border-gray-500 rounded-xl duration-500 ease-in-out w-full " + (isWide ? '' : ('section transition-transform ' + (isLeft ? ' ' : ' -translate-x-double')))}
                             id="sectionA">
                             <div className="flex flex-col space-y-2 msgProContainer">
                                 {proMessages.map(function (a, i) {
                                     return (
-                                        <Message nickname={a.nickname} msg={a.message} sender={a.sender} kakaoId={kakaoId} date={a.date}/>
+                                        <Message nickname={a.nickname} msg={a.message} sender={a.kakao_id} kakaoId={kakaoId} date={a.created_at}/>
                                     )
                                 })}
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            최0현
-                                        </div>
-                                        내같은 기운을 가진 놈은 짬뽕을 먹었어야 맞는긴데~~ 꼬이따~ 꼬이써~~
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 23:25:17
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            이0구
-                                        </div>
-                                        거 짬뽕먹기 딱 좋은 날씨네
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 23:49:06
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            오0남
-                                        </div>
-                                        제발 그만해~~ 나 짬뽕먹고 싶어~~
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 23:55:48
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            강0중
-                                        </div>
-                                        난 짬뽕 먹을 때 이 놈이 세상 마지막 짬뽕이라는 생각으로 먹는다...
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-27 00:21:59
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            전0환
-                                        </div>
-                                        짜장은 사탄의 가래같은거고
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-27 00:27:31
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            전0환
-                                        </div>
-                                        짬뽕은 주님의 은총이야
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-27 00:27:39
-                                        </div>
-                                    </div>
-                                </div>
-
+                                
                             </div>
                         </div>
                         <div className="w-1 max-h-full bg-black rounded-lg mx-10 hidden sm:block">
 
                         </div>
-                        <div className={"h-full flex-1 overflow-y-auto p-4 border-4 border-solid border-gray-500 rounded-xl " + (isWide ? '' : ('section transition-transform duration-500 ease-in-out transform ' + (isLeft ? ' translate-x-full' : ' -translate-x-full')))}
+                        <div ref={conScroll} className={"h-full flex-1 overflow-y-auto p-4 border-4 border-solid border-gray-500 rounded-xl " + (isWide ? '' : ('section transition-transform duration-500 ease-in-out transform ' + (isLeft ? ' translate-x-full' : ' -translate-x-full')))}
                             id="sectionB">
                             <div className="flex flex-col space-y-2 msgConContainer">
                                 {conMessages.map(function (a, i) {
                                     return (
-                                        <Message nickname={a.nickname} msg={a.message} sender={a.sender} kakaoId={kakaoId} date={a.date}/>
+                                        <Message nickname={a.nickname} msg={a.message} sender={a.kakao_id} kakaoId={kakaoId} date={a.created_at}/>
                                     )
                                 })}
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            톤0칠
-                                        </div>
-                                        악!!! 제가 만든 신작 오도기합 짜세넘치는 해병짜장의 시식을 부탁드려도 되는지 여쭤봐도 되는지 확인할 수 있는지를 질문드려도 되는지에 대한 의견을 여쭈어도 되는지 궁금합니다!!!!
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 20:07:04
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            곽0팔
-                                        </div>
-                                        나 뉴진스 민지인데 비추준다
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 20:47:31
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            김0붕
-                                        </div>
-                                        확실히 짜장면을 먹고 나서 내 인생이 달라졌다.
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 21:05:42
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            신0오
-                                        </div>
-                                        이걸 보니 새삼 중화요리 초창기부터 지금까지 현역으로 달려온 짜장면이 대단하다고 느껴지네...
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 21:23:30
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex">
-                                    <div className="bg-gray-300 text-black p-2 rounded-lg max-w-xs">
-                                        <div className="text-sm align-text-bottom text-left">
-                                            이0오
-                                        </div>
-                                        솔직히 짜장 안먹는 애들이 음식이 뭔지나 알겠냐
-                                        <div className="text-sm w-full align-text-bottom text-right">
-                                            2023-11-26 21:51:21
-                                        </div>
-                                    </div>
-                                </div>
-
 
                             </div>
                         </div>
@@ -470,7 +480,7 @@ const Message = (props) => {
                 </div>
                     {props.msg}
                 <div class="text-sm w-full align-text-bottom text-right">
-                    {props.date}
+                    {((props.date).toString().replace('T', ' ')).substring(0,16) }
                 </div>
             </div>
         </div>
@@ -482,7 +492,7 @@ const Message = (props) => {
                 </div>
                 {props.msg}
                 <div className="text-sm w-full align-text-bottom text-right">
-                {props.date}
+                {((props.date).toString().replace('T', ' ')).substring(0,16)}
                 </div>
             </div>
         </div>
