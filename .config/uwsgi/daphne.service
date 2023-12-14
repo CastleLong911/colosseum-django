@@ -1,0 +1,16 @@
+[Unit]
+Description=Daphne Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/srv/colosseum-django
+ExecStart=/home/ubuntu/myvenv/bin/daphne -u /tmp/daphne.sock myproject.asgi:application
+
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

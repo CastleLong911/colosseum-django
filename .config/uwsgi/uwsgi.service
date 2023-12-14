@@ -11,14 +11,6 @@ Type=notify
 StandardError=syslog
 NotifyAccess=all
 
-[Service]
-ExecStart=/home/ubuntu/myvenv/bin/daphne -u /tmp/daphne.sock myproject.asgi:application
-
-Restart=always
-RestartSec=5s
-KillSignal=SIGINT
-User=ubuntu
-WorkingDirectory=/srv/colosseum-django
 
 [Install]
 WantedBy=multi-user.target
