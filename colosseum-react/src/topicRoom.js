@@ -187,7 +187,7 @@ const TopicRoom = (props) => {
         }
 
         const newChatSocket = new WebSocket(
-            'ws://127.0.0.1:8000/ws/chat/' + topicId + '/'
+            'ws://127.0.0.1/ws/chat/' + topicId + '/'
         );
 
         newChatSocket.onmessage = (e) => {
