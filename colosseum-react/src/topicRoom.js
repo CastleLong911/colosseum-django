@@ -215,7 +215,7 @@ const TopicRoom = (props) => {
         };
 
         newChatSocket.onclose = (e) => {
-            console.error('Chat socket closed unexpectedly');
+            console.error('Chat socket closed unexpectedly', e);
         };
 
         setChatSocket(newChatSocket);

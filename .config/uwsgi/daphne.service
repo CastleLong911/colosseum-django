@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/srv/colosseum-django
-ExecStart=/home/ubuntu/myvenv/bin/daphne -u /tmp/daphne.sock myproject.asgi:application
+ExecStart=/home/ubuntu/myvenv/bin/daphne -u /tmp/daphne.sock colosseum.asgi:application
 
 Restart=on-failure
 RestartSec=5s
