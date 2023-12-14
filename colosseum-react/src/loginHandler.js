@@ -12,7 +12,7 @@ const LoginHandeler = (props) => {
       
       await axios({
         method: "get",
-        url: `http://debatearena.me:8000/api/login/kakao?code=${code}`,
+        url: process.env.REACT_APP_DEFAULT_URL+`/api/login/kakao?code=${code}`,
         headers: {
           //"Content-Type": "application/json;charset=utf-8", //json형태로 데이터를 보내겠다는뜻
           //"Access-Control-Allow-Origin": "*", //이건 cors 에러때문에 넣어둔것. 당신의 프로젝트에 맞게 지워도됨
@@ -32,6 +32,32 @@ const LoginHandeler = (props) => {
     };
     kakaoLogin();
   }, [props.history]);
+/*
+  useEffect(() => {
+    //입장시 방 정보 가져오는
+    const kakaoLogin = async () => {
+        try {
+            const response = await fetch(process.env.REACT_APP_DEFAULT_URL+"/api/login/kakao?code="+code);
+            if (!response.ok) {
+                console.log('error!');
+            }
+            const data = await response.json();
+            console.log(data);
+            const room = JSON.parse(data);
+            setTopic(room[0].fields.topic);
+            setCons(room[0].fields.cons);
+            setPros(room[0].fields.pros);
+            setPeriod(room[0].fields.period);
+            setDate(room[0].fields.created_at);
+            setKakaoId(localStorage.getItem('kakaoId'));
+            } catch (error) {
+                console.error("Fetching data failed", error);
+            }
+    };
+    kakaoLogin();
+}, [props.history]);
+*/
+
   return (
     <div className="LoginHandler">
       <div className="notice">
