@@ -107,7 +107,7 @@ function Main(){
   }
 
   const fetchRooms = async () => {
-    console.log('version 0.9.1');
+    console.log('version 0.9.2');
     try {
       const response = await fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getRoomInfoAll");
       if (!response.ok) {
