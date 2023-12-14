@@ -15,7 +15,7 @@ function App() {
     <div className="h-full">
       <Routes>
         <Route path="/" element={<Main/>}></Route>
-        <Route path="/api/login/kakao" element={<LoginHandler/>}></Route>
+        <Route path="/social/login/kakao" element={<LoginHandler/>}></Route>
         <Route path="/room" element={<TopicRoom/>}></Route>
       </Routes>
     </div>

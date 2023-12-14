@@ -32,6 +32,7 @@ const LoginHandeler = (props) => {
     };
     kakaoLogin();
   }, [props.history]);
+  
 /*
   useEffect(() => {
     //입장시 방 정보 가져오는
