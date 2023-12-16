@@ -74,6 +74,7 @@ function Main(){
       else{
         try {
           const csrftoken = getCookie('csrftoken');
+          const kakaoId = localStorage.getItem('kakaoId');
           fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getUserInfo",{
             method: 'POST',
             headers: {
