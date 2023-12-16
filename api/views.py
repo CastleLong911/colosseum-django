@@ -150,7 +150,7 @@ def getUserInfo(request):
             data = json.loads(request.body)
             user = CustomUser.objects.get(kakao_id=data.get('kakaoId'))
             suser = serializers.serialize('json', user)
-            return JsonResponse({'success': 'success', 'data': suser})
+            return JsonResponse({'success': 'success', 'data': user})
         except Exception as e:
             return JsonResponse({'success': 'fail', 'error': e})
 
