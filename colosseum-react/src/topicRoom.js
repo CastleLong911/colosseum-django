@@ -187,7 +187,7 @@ const TopicRoom = (props) => {
         }
 
         const newChatSocket = new WebSocket(
-            'ws://debatearena.me/ws/chat/' + topicId + '/'
+            'wss://debatearena.me/ws/chat/' + topicId + '/'
         );
 
         newChatSocket.onmessage = (e) => {
