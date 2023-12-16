@@ -83,7 +83,7 @@ function Main(){
             body: JSON.stringify({'kakaoId': kakaoId}),
             credentials: 'include'
           }).then(res => res.json()).then(data => {
-            console.log('data : ' + data);
+            console.log(data);
           }).catch((error)=>{ 
             console.log("에러 발생:", error);
           });
