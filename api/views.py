@@ -147,8 +147,9 @@ def getMsg(request):
 def getUserInfo(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        print(data)
-        return JsonResponse({'success': 'success', 'data': data})
+        user = CustomUser.objects.get(kakao_id=data.get('kakaoId'))
+        suser = serializers.serialize('json', user)
+        return JsonResponse({'success': 'success', 'data': suser})
 
 def getTokenFromHeader(request):
     auth_header = request.META.get('HTTP_AUTHORIZATION', '')
