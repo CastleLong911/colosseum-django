@@ -68,7 +68,6 @@ function Main(){
 
   useEffect(()=>{
     const getUserInfo = async () => {
-
       if(localStorage.getItem('kakaoId') == null){
 
       }
@@ -84,7 +83,7 @@ function Main(){
             body: JSON.stringify({'kakaoId': kakaoId}),
             credentials: 'include'
           }).then(res => res.json()).then(data => {
-            console.log(data);
+            console.log('data : ' + data);
           }).catch((error)=>{ 
             console.log("에러 발생:", error);
           });
