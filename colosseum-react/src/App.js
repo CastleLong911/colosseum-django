@@ -69,7 +69,7 @@ function Main(){
   useEffect(()=>{
     const getUserInfo = async () => {
       if(localStorage.getItem('kakaoId') == null){
-        return;
+        
       }
       else{
         try {
