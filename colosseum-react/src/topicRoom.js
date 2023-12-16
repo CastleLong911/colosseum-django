@@ -206,7 +206,6 @@ const TopicRoom = (props) => {
                     
                 }else{
                     setConMessages(prev => [...prev, data]);
-                    console.log(conMessages);
                 }
             }
             else if(data.type == 'ERR'){
@@ -246,14 +245,12 @@ const TopicRoom = (props) => {
       }, [conMessages]);
 
     useEffect(() => {
-        console.log('proMessageSize 업데이트됨:', proMessageSize);
     }, [proMessageSize]);
 
 
     useEffect(() =>{
         const getMsg = async (isPro) =>{
             const start = isPro ? proMessages.length : conMessages.length
-            console.log(start);
             try{
                 const response = await fetch(process.env.REACT_APP_DEFAULT_URL+ "/api/getMsg?topic=" + topicId + "&&isPro=" + (isPro ? "True" : "False") +"&&start=" + (isPro ? proMessageSize : conMessageSize));
                 if (!response.ok) {
@@ -267,7 +264,6 @@ const TopicRoom = (props) => {
                 else{
                     setConMessages([...msgs, ...conMessages]);
                 }
-                console.log(msgs);
             } catch (error) {
                 console.error("Fetching data failed", error);
             }
@@ -293,7 +289,6 @@ const TopicRoom = (props) => {
             return;
         }
         if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-            console.log(message);
             chatSocket.send(JSON.stringify({ 'type': 'MSG', 'message': message, 'kakaoId': kakaoId }));
         } else {
             console.error("WebSocket is not open.");
