@@ -146,10 +146,14 @@ def getMsg(request):
 
 def getUserInfo(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        user = CustomUser.objects.get(kakao_id=data.get('kakaoId'))
-        suser = serializers.serialize('json', user)
-        return JsonResponse({'success': 'success', 'data': suser})
+        try:
+            data = json.loads(request.body)
+            user = CustomUser.objects.get(kakao_id=data.get('kakaoId'))
+            suser = serializers.serialize('json', user)
+            return JsonResponse({'success': 'success', 'data': suser})
+        except Exception as e:
+            return JsonResponse({'success': 'fail', 'error': e})
+
 
 def getTokenFromHeader(request):
     auth_header = request.META.get('HTTP_AUTHORIZATION', '')
