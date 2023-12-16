@@ -48,7 +48,6 @@ function Main(){
       const token = localStorage.getItem('jwtToken');
       if (token && checkTokenExpiration(token)) {
         // 토큰 만료
-        console.log('bad');
         isLogin(false);
         fetch("/api/logout").then(res => console.log(res));
       } else if (token && !checkTokenExpiration(token)) {
@@ -107,7 +106,7 @@ function Main(){
   }
 
   const fetchRooms = async () => {
-    console.log('version 0.9.2');
+    console.log('version 0.9.5');
     try {
       const response = await fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getRoomInfoAll");
       if (!response.ok) {
