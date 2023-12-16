@@ -68,11 +68,13 @@ function Main(){
 
   useEffect(()=>{
     const getUserInfo = async () => {
+
       if(localStorage.getItem('kakaoId') == null){
-        
+
       }
       else{
         try {
+          const csrftoken = getCookie('csrftoken');
           fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getUserInfo",{
             method: 'POST',
             headers: {
