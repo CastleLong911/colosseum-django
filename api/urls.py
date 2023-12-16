@@ -9,4 +9,5 @@ urlpatterns = [
     path('getRoomInfo', views.getRoomInfo, name='getRoomInfo'),
     path('getInitMsg', views.getInitMsg, name='getInitMsg'),
     path('getMsg', views.getMsg, name='getMsg'),
+    path('getUserInfo', views.getUserInfo, name='getUserInfo'),
 ]

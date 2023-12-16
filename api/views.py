@@ -144,6 +144,11 @@ def getMsg(request):
         print(e)
         return JsonResponse({'error': 'fail!'})
 
+def getUserInfo(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        print(data)
+        return {'success': 'success', 'data': data}
 
 def getTokenFromHeader(request):
     auth_header = request.META.get('HTTP_AUTHORIZATION', '')

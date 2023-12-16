@@ -66,6 +66,34 @@ function Main(){
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(()=>{
+    const getUserInfo = async () => {
+      if(localStorage.getItem('kakaoId') == null){
+        return;
+      }
+      else{
+        try {
+          fetch(process.env.REACT_APP_DEFAULT_URL+"/api/getUserInfo",{
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({'kakaoId': kakaoId}),
+            credentials: 'include'
+          }).then(res => res.json()).then(data => {
+            console.log(data);
+          }).catch((error)=>{ 
+            console.log("에러 발생:", error);
+          });
+        }catch{
+
+        }
+      }
+    }
+    getUserInfo();
+  },[]);
+
   const logout = () => {
     console.log(process.env.REACT_APP_DEFAULT_URL);
     fetch(process.env.REACT_APP_DEFAULT_URL+"/api/logout").then(res => res.json).then(data => console.log('logout: ' + data)).catch((error) => {
