@@ -34,6 +34,8 @@ function Main(){
   let [isAdmin, setIsAdmin] = useState(false);
   let [newTopic, setNewTopic] = useState('');
   let [newPeriod, setNewPeriod] = useState();
+  let [nor, setNor] = useState(0);
+  let [nov, setNov] = useState(0);
   const [rooms, setRooms] = useState([]);
   useEffect(() => {
     fetchRooms();
@@ -85,12 +87,8 @@ function Main(){
             credentials: 'include'
           }).then(res => res.json()).then(data => {
             const obj = JSON.parse(data.data)
-            console.log('nor : ', obj);
-            console.log('nor : ', obj[0]);
-            console.log('nor : ', obj[0].fields);
-            console.log('nor : ', obj[0].fields.nor);
-            
-            
+            setNor(obj[0].fields.nor);
+            setNov(obj[0].fields.nov);
           }).catch((error)=>{ 
             console.log("에러 발생:", error);
           });
@@ -104,7 +102,7 @@ function Main(){
 
   const logout = () => {
     console.log(process.env.REACT_APP_DEFAULT_URL);
-    fetch(process.env.REACT_APP_DEFAULT_URL+"/api/logout").then(res => res.json).then(data => console.log('logout: ' + data)).catch((error) => {
+    fetch(process.env.REACT_APP_DEFAULT_URL+"/api/logout").then(res => res.json).then(data => console.log('logout')).catch((error) => {
       console.log("에러 발생:", error);
     });
     localStorage.clear();
@@ -193,8 +191,8 @@ function Main(){
             login == true ? (
             <div>
               <p><span>{nickname}</span></p>
-              <p>작성 댓글 수 <span id="nor">123</span></p>
-              <p>투표 수 <span id="nov">123</span></p>
+              <p>작성 댓글 수 <span id="nor">{nor}</span></p>
+              <p>투표 수 <span id="nov">{nov}</span></p>
               <button className="text-gray-600" onClick={logout}>로그아웃</button>
             </div>
             )
