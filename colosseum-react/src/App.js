@@ -84,10 +84,11 @@ function Main(){
             body: JSON.stringify({'kakaoId': kakaoId}),
             credentials: 'include'
           }).then(res => res.json()).then(data => {
-            console.log('nor : ', JSON.parse(data.data));
-            console.log('nor : ', JSON.parse(data.data[0]));
-            console.log('nor : ', JSON.parse(data.data[0].fields));
-            console.log('nor : ' + JSON.parse(data.data[0].fields.nor));
+            const obj = JSON.parse(data.data)
+            console.log('nor : ', obj);
+            console.log('nor : ', obj[0]);
+            console.log('nor : ', obj[0].fields);
+            console.log('nor : ', obj[0].fields.nor);
             
             
           }).catch((error)=>{ 
