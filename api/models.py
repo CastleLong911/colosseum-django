@@ -49,9 +49,13 @@ class Vote(models.Model):
     nickname = models.CharField(max_length=100)
 
     def save(self, *args, **kwargs):
+        creating = self._state.adding
         if not self.nickname:
             self.nickname = self.kakao_id.nickname
         super().save(*args, **kwargs)
+        if creating:
+            CustomUser.objects.filter(kakao_id=self.kakao_id).update(nov=models.F('nov') + 1)
+
 
 class Message(models.Model):
     roomId = models.ForeignKey(RoomInformation, on_delete=models.CASCADE, related_name='messages')
@@ -60,3 +64,9 @@ class Message(models.Model):
     nickname = models.CharField(max_length=100)
     created_at = models.DateTimeField(default=timezone.now)
     message = models.CharField(max_length=255, default='')
+
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+        super().save(*args, **kwargs)
+        if creating:
+            CustomUser.objects.filter(kakao_id=self.kakao_id).update(nor=models.F('nor') + 1)
