@@ -42,7 +42,7 @@ class ChatConsumer(WebsocketConsumer):
                 print(text_data_json['isPro'], sender, room_id)
                 vote.save()
                 countRoomVote(room_id)
-                countUserVote(sender)
+                #countUserVote(sender)
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
@@ -64,7 +64,7 @@ class ChatConsumer(WebsocketConsumer):
                 )
                 msg.save()
                 countRoomMsg(room_id)
-                countUserMsg(sender)
+                #countUserMsg(sender)
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
                     {
