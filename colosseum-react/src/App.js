@@ -84,8 +84,14 @@ function Main(){
             body: JSON.stringify({'kakaoId': kakaoId}),
             credentials: 'include'
           }).then(res => res.json()).then(data => {
+            console.log('nor : ', JSON.parse(data.data));
+            console.log('nor : ', JSON.parse(data.data.fields));
+            console.log('nor : ', JSON.parse(data.data[0]));
+            console.log('nor : ', JSON.parse(data.data[0].fields));
             
             console.log('nor : ' + JSON.parse(data.data[0].fields.nor));
+            
+            
           }).catch((error)=>{ 
             console.log("에러 발생:", error);
           });
