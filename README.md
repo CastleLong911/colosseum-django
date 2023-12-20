@@ -9,7 +9,7 @@
 
 <p>Before discussion, You should vote pro or con</p>
 
-<p>then, you can leave your opinions that show others by realtime</p>
+<p>Then, you can leave your opinions that show others by realtime</p>
 
 <p>But, you can't reverse that you voted</p>
 
@@ -19,4 +19,4 @@
 
 <p>I hope you enjoy the discussion in a well-mannered and sophisticated way</p>
 
-<p>thank you</p>
+<p>THANK YOU</p>
