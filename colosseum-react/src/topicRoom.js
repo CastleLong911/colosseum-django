@@ -31,6 +31,8 @@ const TopicRoom = (props) => {
     const [conMessageSize, setConMessageSize] = useState(0);
     const [prevProScrollHeight, setPrevProScrollHeight] = useState(0);
     const [prevConScrollHeight, setPrevConScrollHeight] = useState(0);
+    const proMessagesRef = useRef(proMessages);
+    const conMessagesRef = useRef(conMessages);
 
     const proBarStyle = {
         width: pros == 0 ? '0%' : ((pros / (pros+cons) * 100).toFixed(2))+ '%'
@@ -232,6 +234,7 @@ const TopicRoom = (props) => {
             proScroll.current.scrollTop += proScroll.current.scrollHeight - prevProScrollHeight;
             setProScrollTop(false);
         }
+        proMessagesRef.current = proMessages;
       }, [proMessages]);
       
     useEffect(() => {
@@ -242,17 +245,15 @@ const TopicRoom = (props) => {
             conScroll.current.scrollTop += conScroll.current.scrollHeight - prevConScrollHeight;
             setConScrollTop(false);
         }
+        conMessagesRef.current = conMessages;
       }, [conMessages]);
-
-    useEffect(() => {
-    }, [proMessageSize]);
 
 
     useEffect(() =>{
         const getMsg = async (isPro) =>{
-            const start = isPro ? proMessages.length : conMessages.length
+            const start = isPro ? proMessagesRef.current.length : conMessagesRef.current.length;
             try{
-                const response = await fetch(process.env.REACT_APP_DEFAULT_URL+ "/api/getMsg?topic=" + topicId + "&&isPro=" + (isPro ? "True" : "False") +"&&start=" + (isPro ? proMessageSize : conMessageSize));
+                const response = await fetch(process.env.REACT_APP_DEFAULT_URL+ "/api/getMsg?topic=" + topicId + "&&isPro=" + (isPro ? "True" : "False") +"&&start=" + start);
                 if (!response.ok) {
                     console.log('error!');
                 }
