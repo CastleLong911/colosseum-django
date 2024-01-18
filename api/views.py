@@ -129,13 +129,13 @@ def getInitMsg(request):
 def getMsg(request):
     try:
         topic = request.GET.get('topic', '').replace('-', '')
-        isPro = bool(request.GET.get('isPro', ''))
+        isPro = request.GET.get('isPro', '')
         start = int(request.GET.get('start', ''))
-        if isPro:
+        if isPro is "True":
             msg = Message.objects.filter(roomId_id=topic, isPro=True).order_by('-created_at')[start:start+30]
             data = serializers.serialize('json', msg)
             return JsonResponse(data, safe=False)
-        else:
+        elif isPro is "False":
             msg = Message.objects.filter(roomId_id=topic, isPro=False).order_by('-created_at')[start:start+30]
             data = serializers.serialize('json', msg)
             return JsonResponse(data, safe=False)
