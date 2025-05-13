@@ -1,5 +1,8 @@
 # This is a Colosseum that I projected for capstone design but renewed with react and django
 
+![ezgif-2d9565929e770b](https://github.com/user-attachments/assets/18c333ab-5a88-45f5-af5c-97c0a51e5602)
+
+
 
 ## What is the Colosseum?
 
